@@ -18,8 +18,8 @@ class TaskFactory extends Factory
         return [
             'title' => $this->faker->text(20),
             'description' => $this->faker->text(255),
-            'status' => $this->faker->randomElement([Task::DOING, Task::TODO]),
-            'user_id' => User::inRandomOrder()->first()->id
+            'status' => $this->faker->randomElement([Task::DOING, Task::TODO, Task::DONE]),
+            'user_id' => User::factory()->create()->id
         ];
     }
 }
