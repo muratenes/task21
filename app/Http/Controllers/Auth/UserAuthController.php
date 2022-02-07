@@ -3,42 +3,54 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UserLoginRequest;
+use App\Http\Requests\UserRegisterRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class UserAuthController extends Controller
 {
-    public function register(Request $request)
+    /**
+     * Create new user
+     *
+     * @param UserRegisterRequest $request
+     * @return \Illuminate\Http\Response
+     */
+    public function register(UserRegisterRequest $request)
     {
-        $data = $request->validate([
-            'name' => 'required|max:255',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|confirmed'
-        ]);
-
-        $data['password'] = bcrypt($request->password);
+        $data = $request->validated();
+        $data['password'] = Hash::make($request->password);
 
         $user = User::create($data);
 
         $token = $user->createToken('API Token')->accessToken;
 
-        return response([ 'user' => $user, 'token' => $token]);
+        return response([
+            'user' => UserResource::make($user),
+            'token' => $token
+        ], 201);
     }
 
-    public function login(Request $request)
+
+    /**
+     * @param UserLoginRequest $request
+     * @return \Illuminate\Http\Response
+     */
+    public function login(UserLoginRequest $request)
     {
-        $data = $request->validate([
-            'email' => 'email|required',
-            'password' => 'required'
-        ]);
+        $data = $request->validated();
 
         if (!auth()->attempt($data)) {
-            return response(['error_message' => 'Incorrect Details.Please try again']);
+            return response(['error_message' => __('auth.failed')]);
         }
 
-        $token = auth()->user()->createToken('API Token')->accessToken;
+        $token = $request->user()->createToken('API Token')->accessToken;
 
-        return response(['user' => auth()->user(), 'token' => $token]);
+        return response([
+            'user' => UserResource::make($request->user()),
+            'token' => $token
+        ]);
 
     }
 }
