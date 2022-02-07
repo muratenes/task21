@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TaskStoreRequest;
+use App\Http\Requests\TaskUpdateRequest;
+use App\Http\Resources\TaskResource;
 use App\Models\Task;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
@@ -16,13 +16,17 @@ class TaskController extends Controller
      */
     public function index()
     {
-        //
+        $tasks = Task::latest()->get();
+
+        return response([
+            'data' => TaskResource::collection($tasks)
+        ], 200);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param TaskStoreRequest $request
      * @return \Illuminate\Http\Response
      */
     public function store(TaskStoreRequest $request)
@@ -34,7 +38,9 @@ class TaskController extends Controller
             'status' => Task::TODO
         ]));
 
-        return response(['data' => $task], 201);
+        return response([
+            'data' => new TaskResource($task)
+        ], 201);
     }
 
     /**
@@ -45,19 +51,25 @@ class TaskController extends Controller
      */
     public function show(Task $task)
     {
-        //
+        return response([
+            'data' => new TaskResource($task)
+        ], 200);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param TaskUpdateRequest $request
      * @param \App\Models\Task $task
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Task $task)
+    public function update(TaskUpdateRequest $request, Task $task)
     {
-        //
+        $task->update($request->validated());
+
+        return response([
+            'data' => new TaskResource($task)
+        ], 200);
     }
 
     /**
@@ -68,6 +80,10 @@ class TaskController extends Controller
      */
     public function destroy(Task $task)
     {
-        //
+        $task->delete();
+
+        return response([
+            'data' => new TaskResource($task)
+        ], 200);
     }
 }
